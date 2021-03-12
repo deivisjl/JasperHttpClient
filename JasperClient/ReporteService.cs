@@ -16,6 +16,8 @@ namespace JasperClient
     public class ReporteService : IReporteService
     {
         private readonly ConsumirServicioExterno cliente;
+        private string carpeta = "/Documentos/";
+        private string archivo = "Reporte.pdf";
 
         public ReporteService()
         {
@@ -28,22 +30,23 @@ namespace JasperClient
 
             var peticion = new HttpRequestMessage(HttpMethod.Get, cliente.getURL() + "resources?type=reportUnit");
 
-            HttpResponseMessage respuesta = await cliente.HacerPeticion(peticion);
-
-            if (respuesta.IsSuccessStatusCode)
+            try
             {
-                using (var resp = respuesta)
+                HttpResponseMessage respuesta = await cliente.HacerPeticion(peticion);
+
+                if(respuesta.IsSuccessStatusCode)
                 {
-                    result = await resp.Content.ReadAsAsync<ReporteModelDto>();
+                    result = await respuesta.Content.ReadAsAsync<ReporteModelDto>();
+
+                    return devolverRespuesta(200, result, false,"");
                 }
+
+                return devolverRespuesta(402, null, false, respuesta.ReasonPhrase);
             }
-            else
+            catch (Exception e)
             {
-                throw new Exception(respuesta.ReasonPhrase);                
+                return devolverRespuesta(402, null, true, e.Message);
             }
-
-            return result;
-
         }
 
         public async Task<RespuestaDto> ObtenerReporte(string uri)
@@ -56,37 +59,78 @@ namespace JasperClient
 
             if (respuesta.IsSuccessStatusCode)
             {
-                string ruta = System.Web.HttpContext.Current.Server.MapPath(string.Format("/Documentos/") + "Reporte.pdf");
-
                 try
                 {
-                    if (File.Exists(ruta))
-                    {
-                        File.Delete(ruta);
-                    }
+                    string ruta = obtenerDestino();
+
+                    verificarExistenciaArchivo(ruta);
 
                     using (var fs = new FileStream(ruta, FileMode.CreateNew))
                     {
                         await respuesta.Content.CopyToAsync(fs);
                     }
 
-                    result.Status = 200;
-                    result.Data = ruta;
+                    return devolverRespuesta(200,ruta,false);
+                    
                 }
                 catch (Exception e)
                 {
-                    result.Status = 402;
-                    result.Data = e.Message;
+                    return devolverRespuesta(402, e.Message, true);
                 }
-
-                return result;
             }
             else
             {
-                result.Status = 402;
-                result.Data = respuesta.ReasonPhrase;
+                return devolverRespuesta(402, respuesta.ReasonPhrase, true);
+            }
+        }
 
-                return result;
+        public void verificarExistenciaArchivo(string ruta)
+        {
+            if (File.Exists(ruta))
+            {
+                File.Delete(ruta);
+            }
+
+            return;
+        }
+
+        public string obtenerDestino()
+        {
+            return System.Web.HttpContext.Current.Server.MapPath(string.Format(carpeta) + archivo);
+        }
+
+        private RespuestaDto devolverRespuesta(int estado, string datos, bool error)
+        {
+            RespuestaDto respuesta = new RespuestaDto();
+
+            if(!error)
+            {
+                respuesta.Status = estado;
+                respuesta.Data = datos;
+            }
+            else
+            {
+                respuesta.Status = estado;
+                respuesta.Data = datos;
+            }
+
+            return respuesta;
+        }
+
+        private ReporteModelDto devolverRespuesta(int status, ReporteModelDto datos, bool error, string mensaje)
+        {
+            if(!error)
+            {
+                datos.Status = status;
+
+                return datos;
+            }
+            else
+            {
+                datos.Status = status;
+                datos.Error = mensaje;
+
+                return datos;
             }
         }
     }

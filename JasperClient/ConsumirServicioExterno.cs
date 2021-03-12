@@ -12,16 +12,16 @@ namespace JasperClient
     {
         private static ConsumirServicioExterno instance = null; 
 
-        private readonly HttpClient client; //variable de retorno de instancia singleton
+        private readonly HttpClient cliente;
 
         private string user = "jasperadmin";
         private string password = "jasperadmin";
 
-        private string URL = "http://localhost:8080/jasperserver/rest_v2/"; //URL base del servidor para peticiones
+        private string URL = "http://localhost:8080/jasperserver/rest_v2/";
 
         private ConsumirServicioExterno()
         {
-            client = new HttpClient();
+            cliente = new HttpClient();
 
             AgregarCabeceras();
             AgregarAutenticacion();
@@ -30,13 +30,13 @@ namespace JasperClient
         private void AgregarAutenticacion()
         {
             var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user}:{password}"));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64String);
+            cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64String);
         }
 
         private void AgregarCabeceras()
         {
-            client.DefaultRequestHeaders.Add("Accept","application/json");
-            client.DefaultRequestHeaders.Add("Connection","keep-alive");
+            cliente.DefaultRequestHeaders.Add("Accept","application/json");
+            cliente.DefaultRequestHeaders.Add("Connection","keep-alive");
         }
 
         public static ConsumirServicioExterno Instance
@@ -61,7 +61,7 @@ namespace JasperClient
         {
             HttpResponseMessage respuesta;
             
-            respuesta = await client.SendAsync(parametros);
+            respuesta = await cliente.SendAsync(parametros);
 
             return respuesta; 
         }

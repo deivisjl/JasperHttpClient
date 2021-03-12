@@ -26,16 +26,7 @@ namespace API.Controllers
         {
             var result = new ReporteModelDto();
 
-            try
-            {
-                result = await service.Listar();
-                result.Status = 200;
-            }
-            catch (Exception e)
-            {
-                result.Status = e.HResult;
-                result.Error = e.Message;
-            }
+            result = await service.Listar();
 
             return Request.CreateResponse(HttpStatusCode.OK, result, Configuration.Formatters.JsonFormatter);
         }
@@ -47,16 +38,7 @@ namespace API.Controllers
 
             string url = "reports/Demo_Studio/Clientes.pdf?Registros=10&Pais=Mexico";
 
-            try
-            {
-                result = await service.ObtenerReporte(url);
-                result.Status = 200;
-            }
-            catch (Exception e)
-            {
-                result.Status = e.HResult;
-                result.Data = e.Message;
-            }
+            result = await service.ObtenerReporte(url);
 
             return Request.CreateResponse(HttpStatusCode.OK, result, Configuration.Formatters.JsonFormatter);
         }
